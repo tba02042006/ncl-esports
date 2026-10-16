@@ -28,7 +28,15 @@ export interface Team {
   id: string;
   slot: number;
   name: Localized;
-  roster: { role: Localized; name: string | null }[];
+  logo?: string | null;
+  university?: Localized;
+  roster: {
+    role: Localized;
+    name: string | null;
+    photo?: string | null;
+    steamUrl?: string | null;
+    profileName?: Localized;
+  }[];
 }
 export const teams: Team[] = Array.from({ length: 16 }, (_, i) => ({
   id: `team-${i + 1}`,
@@ -87,12 +95,14 @@ for (let round = 0; round < 4; round++)
     });
 export function participants(
   match: Match,
+  teamList: Team[] = teams,
+  matchList: Match[] = matches,
 ): [Team | undefined, Team | undefined] {
   return match.teamIds.map((id, i) => {
     const source = match.sources
-      ? matches.find((m) => m.id === match.sources![i])
+      ? matchList.find((m) => m.id === match.sources![i])
       : undefined;
-    return teams.find((t) => t.id === (id ?? source?.winnerId));
+    return teamList.find((t) => t.id === (id ?? source?.winnerId));
   }) as [Team | undefined, Team | undefined];
 }
 export const config = {

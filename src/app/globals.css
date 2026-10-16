@@ -3082,3 +3082,248 @@ footer {
     animation: none;
   }
 }
+/* Published CMS content extends, rather than replaces, the approved production layouts. */
+.uploaded-emblem img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+.uploaded-emblem:after {
+  display: none;
+}
+.preserve-lines {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.player-photo {
+  display: block;
+  width: 40px;
+  height: 45px;
+  background: #26381a;
+}
+.player-photo img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.player-steam {
+  display: block;
+  color: var(--accent);
+  margin-top: 8px;
+}
+.official-tournament-banner {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  opacity: 0.3;
+}
+.official-tournament-banner img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.tournament-picker {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 30px;
+}
+.tournament-picker a {
+  padding: 12px 17px;
+  border: 1px solid var(--line);
+  font-size: 12px;
+  background: #172210;
+}
+.tournament-picker a.active {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+.official-partners {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 25px;
+}
+.official-partner {
+  border: 1px solid #455734;
+  background: #131c0e;
+  padding: 35px;
+  position: relative;
+  overflow: hidden;
+}
+.official-partner.tier-title {
+  grid-column: 1/-1;
+  background: #1c2a12;
+  border-color: #789b4d;
+}
+.official-partner h2 {
+  font-size: 34px;
+  margin: 25px 0;
+}
+.official-partner p {
+  font-size: 14px;
+}
+.official-partner-logo {
+  height: 140px;
+  margin: 30px 0;
+  position: relative;
+  z-index: 1;
+}
+.official-partner-logo img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+.official-partner-banner {
+  position: absolute;
+  inset: 0;
+  opacity: 0.12;
+}
+.official-partner-banner img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.official-partner > .text-link {
+  position: relative;
+}
+.official-partners.compact {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  margin: 30px 0;
+}
+.compact .official-partner {
+  border: 0;
+  background: transparent;
+  padding: 20px;
+  min-width: 200px;
+}
+.compact .official-partner-logo {
+  height: 65px;
+  width: 150px;
+  margin: 20px auto;
+}
+.compact .official-partner h2 {
+  font-size: 23px;
+}
+.published-news {
+  display: grid;
+  gap: 20px;
+}
+.news-cover {
+  min-height: 220px;
+  overflow: hidden;
+}
+.news-cover img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.published-news-card .news-art > span {
+  font-size: 50px;
+  letter-spacing: -3px;
+}
+.broadcast-editorial {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  margin: 0 0 25px;
+}
+.broadcast-editorial h2 {
+  font-size: 32px;
+}
+.article-nav {
+  display: flex;
+  justify-content: space-between;
+  gap: 25px;
+  align-items: center;
+  margin-bottom: 55px;
+}
+.article-nav > div {
+  display: flex;
+  gap: 15px;
+  font: 11px monospace;
+  color: var(--accent);
+}
+.article-nav a[aria-current="page"] {
+  text-decoration: underline;
+}
+.public-article .page-title {
+  display: block;
+  max-width: 1100px;
+  overflow-wrap: anywhere;
+  font-size: clamp(42px, 6vw, 90px);
+}
+.article-cover {
+  aspect-ratio: 16/7;
+  margin: 35px 0;
+  overflow: hidden;
+}
+.article-cover img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.article-body {
+  font-size: 19px;
+  color: #c5d2b9;
+  line-height: 1.9;
+  max-width: 860px;
+  margin: 40px 0 60px;
+}
+.published-news-card .news-copy h3 {
+  overflow-wrap: anywhere;
+}
+.team-modal .roster:empty:after {
+  content: "—";
+  color: var(--muted);
+}
+@media (max-width: 700px) {
+  .official-partners {
+    grid-template-columns: 1fr;
+  }
+  .official-partner.tier-title {
+    grid-column: auto;
+  }
+  .official-partner {
+    padding: 25px;
+  }
+  .official-partner h2 {
+    font-size: 28px;
+  }
+  .article-body {
+    font-size: 16px;
+  }
+  .broadcast-editorial h2 {
+    font-size: 26px;
+  }
+  .article-nav {
+    gap: 20px;
+    margin-bottom: 35px;
+  }
+  .article-nav .eyebrow {
+    font-size: 8px;
+  }
+  .published-news-card .news-art {
+    min-height: 190px;
+  }
+}
+.tournament-banner > .official-tournament-banner {
+  position: absolute;
+  inset: 0;
+  max-width: none;
+  z-index: 0;
+}
+.tournament-banner > div:not(.official-tournament-banner):not(.tournament-art) {
+  position: relative;
+  z-index: 2;
+  max-width: 600px;
+}
+.roster strong .player-full-name {
+  display: block;
+  color: var(--muted);
+  font-size: 10px;
+  margin: 7px 0 0;
+  font-weight: 400;
+}

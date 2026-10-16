@@ -1,7 +1,21 @@
 "use client";
 import Link from "next/link";
+import { formatUzt } from "@/lib/format";
+import { OfficialPartners, PublishedNews } from "./published-content";
+import {
+  demoSnapshot,
+  snapshotCopy,
+  type PublicSnapshot,
+} from "@/lib/public-snapshot";
 import { StageArt } from "./stage-art";
-import { useEffect, useState, useSyncExternalStore, useRef } from "react";
+import {
+  useEffect,
+  useState,
+  useSyncExternalStore,
+  useRef,
+  createContext,
+  useContext,
+} from "react";
 import {
   ArrowUpRight,
   ArrowRight,
@@ -19,12 +33,8 @@ import {
   Mail,
 } from "lucide-react";
 import {
-  copy,
-  config,
-  matches,
-  teams,
   pages,
-  participants,
+  participants as getParticipants,
   text,
   type Language,
   type Page,
@@ -35,10 +45,19 @@ import {
 function Emblem({
   slot = 0,
   large = false,
+  logo,
 }: {
   slot?: number;
   large?: boolean;
+  logo?: string | null;
 }) {
+  if (logo)
+    return (
+      <span className={`emblem uploaded-emblem ${large ? "large" : ""}`}>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src={logo} alt="" loading="lazy" />
+      </span>
+    );
   return (
     <span
       className={`emblem ${large ? "large" : ""}`}
@@ -94,7 +113,25 @@ function Brand() {
     </span>
   );
 }
-export default function Site({ page }: { page: Page }) {
+const LeagueContext = createContext<PublicSnapshot>(demoSnapshot);
+export default function Site({
+  page,
+  snapshot = demoSnapshot,
+}: {
+  page: Page;
+  snapshot?: PublicSnapshot;
+}) {
+  return (
+    <LeagueContext.Provider value={snapshot}>
+      <SiteView page={page} />
+    </LeagueContext.Provider>
+  );
+}
+function SiteView({ page }: { page: Page }) {
+  const league = useContext(LeagueContext);
+  const { teams, matches } = league;
+  const copy = snapshotCopy(league);
+  const participants = (match: Match) => getParticipants(match, teams, matches);
   const lang = useSyncExternalStore(
     subscribeLanguage,
     readLanguage,
@@ -112,7 +149,14 @@ export default function Site({ page }: { page: Page }) {
   const [filter, setFilter] = useState("all");
   const [query, setQuery] = useState("");
   const t = (v: Localized) => v[lang];
-  const href = (p: Page) => `${p === "home" ? "/" : `/${p}`}?lang=${lang}`;
+  const config = {
+    ...league.config,
+    tournamentName: league.tournament
+      ? t(league.tournament.name)
+      : league.config.tournamentName,
+  };
+  const href = (p: Page) =>
+    `${p === "home" ? "/" : `/${p}`}?${new URLSearchParams({ lang, ...(league.tournament ? { tournament: league.tournament.slug } : {}) })}`;
 
   useEffect(() => {
     document.documentElement.lang = lang;
@@ -311,7 +355,11 @@ export default function Site({ page }: { page: Page }) {
                   </div>
                   <h2>
                     {config.tournamentName}
-                    <span className="tag">DEMO</span>
+                    <span className="tag">
+                      {league.mode === "official"
+                        ? t(text("RASMIY", "ОФИЦИАЛЬНО", "OFFICIAL"))
+                        : "DEMO"}
+                    </span>
                   </h2>
                   <p>{t(copy.season)}</p>
                   <Link className="text-link" href={href("tournaments")}>
@@ -321,7 +369,7 @@ export default function Site({ page }: { page: Page }) {
                 <div className="featured-stats">
                   <div>
                     <Users />
-                    <strong>16</strong>
+                    <strong>{teams.length}</strong>
                     <span>{t(copy.teams)}</span>
                   </div>
                   <div>
@@ -331,41 +379,51 @@ export default function Site({ page }: { page: Page }) {
                   </div>
                   <div>
                     <Target />
-                    <strong>SE</strong>
+                    <strong>
+                      {league.tournament?.format === "round_robin"
+                        ? "RR"
+                        : league.tournament?.format === "groups_playoffs"
+                          ? "G+PO"
+                          : "SE"}
+                    </strong>
                     <span>{t(copy.format)}</span>
                   </div>
                 </div>
                 <Countdown lang={lang} />
               </section>
-              <section className="match-spotlight">
-                <div className="spotlight-intro">
-                  <span className="eyebrow">
-                    {t(text("UCHRASHUV MARKAZI", "МАТЧ-ЦЕНТР", "MATCH CENTER"))}{" "}
-                    / 01
-                  </span>
-                  <h2>
-                    {t(
-                      text(
-                        "Raqobat shu yerda boshlanadi.",
-                        "Соперничество начинается здесь.",
-                        "Where rivalries begin.",
-                      ),
-                    )}
-                  </h2>
-                  <p>{t(copy.pending)}</p>
-                  <Link href={href("bracket")} className="text-link">
-                    {t(pages[4].label)}
-                    <ArrowUpRight size={18} />
-                  </Link>
-                </div>
-                <MatchCard
-                  match={
-                    matches.find((m) => m.status !== "finished") ?? matches[0]
-                  }
-                  lang={lang}
-                  onSelect={selectMatch}
-                />
-              </section>
+              {matches.length > 0 && (
+                <section className="match-spotlight">
+                  <div className="spotlight-intro">
+                    <span className="eyebrow">
+                      {t(
+                        text("UCHRASHUV MARKAZI", "МАТЧ-ЦЕНТР", "MATCH CENTER"),
+                      )}{" "}
+                      / 01
+                    </span>
+                    <h2>
+                      {t(
+                        text(
+                          "Raqobat shu yerda boshlanadi.",
+                          "Соперничество начинается здесь.",
+                          "Where rivalries begin.",
+                        ),
+                      )}
+                    </h2>
+                    <p>{t(copy.pending)}</p>
+                    <Link href={href("bracket")} className="text-link">
+                      {t(pages[4].label)}
+                      <ArrowUpRight size={18} />
+                    </Link>
+                  </div>
+                  <MatchCard
+                    match={
+                      matches.find((m) => m.status !== "finished") ?? matches[0]
+                    }
+                    lang={lang}
+                    onSelect={selectMatch}
+                  />
+                </section>
+              )}
               <section className="section">
                 <SectionHead
                   lang={lang}
@@ -430,30 +488,41 @@ export default function Site({ page }: { page: Page }) {
                     title={t(copy.news)}
                     number="03"
                   />
-                  <Link href={href("about")} className="news-card">
-                    <div className="news-art">
-                      <span>
-                        NEXT
-                        <br />
-                        GEN
-                        <ArrowUpRight aria-hidden="true" />
-                      </span>
-                      <small>NCL / COMMUNITY</small>
-                    </div>
-                    <div className="news-copy">
-                      <span className="eyebrow">
-                        NCL ·{" "}
-                        {t(
-                          text("LIGA HAQIDA", "О ЛИГЕ", "LEAGUE INTRODUCTION"),
-                        )}
-                      </span>
-                      <h3>
-                        {t(copy.newsTitle)}
-                        <ArrowUpRight size={22} />
-                      </h3>
-                      <p>{t(copy.newsBody)}</p>
-                    </div>
-                  </Link>
+                  {league.news.length ? (
+                    <PublishedNews
+                      articles={league.news.slice(0, 3)}
+                      lang={lang}
+                    />
+                  ) : (
+                    <Link href={href("about")} className="news-card">
+                      <div className="news-art">
+                        <span>
+                          NEXT
+                          <br />
+                          GEN
+                          <ArrowUpRight aria-hidden="true" />
+                        </span>
+                        <small>NCL / COMMUNITY</small>
+                      </div>
+                      <div className="news-copy">
+                        <span className="eyebrow">
+                          NCL ·{" "}
+                          {t(
+                            text(
+                              "LIGA HAQIDA",
+                              "О ЛИГЕ",
+                              "LEAGUE INTRODUCTION",
+                            ),
+                          )}
+                        </span>
+                        <h3>
+                          {t(copy.newsTitle)}
+                          <ArrowUpRight size={22} />
+                        </h3>
+                        <p>{t(copy.newsBody)}</p>
+                      </div>
+                    </Link>
+                  )}
                 </div>
               </section>
               <section className="partner-strip">
@@ -462,7 +531,15 @@ export default function Site({ page }: { page: Page }) {
                   NEXT / TOGETHER
                 </div>
                 <h2>{t(copy.partners)}</h2>
-                <p>{t(copy.partnerBody)}</p>
+                {league.sponsors.length ? (
+                  <OfficialPartners
+                    partners={league.sponsors}
+                    lang={lang}
+                    compact
+                  />
+                ) : (
+                  <p>{t(copy.partnerBody)}</p>
+                )}
                 <Link href={href("sponsors")} className="text-link">
                   {t(copy.details)}
                   <ArrowUpRight size={17} />
@@ -481,11 +558,37 @@ export default function Site({ page }: { page: Page }) {
               <Target size={15} />
               {t(copy.demo)}
             </div>
+            {league.tournaments.length > 1 &&
+              ["tournaments", "teams", "matches", "bracket"].includes(page) && (
+                <div className="tournament-picker">
+                  {league.tournaments.map((item) => (
+                    <Link
+                      key={item.id}
+                      className={
+                        item.id === league.tournament?.id ? "active" : ""
+                      }
+                      href={`/${page}?${new URLSearchParams({ lang, tournament: item.slug })}`}
+                    >
+                      {t(item.name)}
+                    </Link>
+                  ))}
+                </div>
+              )}
             {page === "tournaments" && (
               <>
                 <section className="tournament-banner">
+                  {league.tournament?.banner && (
+                    <div className="official-tournament-banner">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src={league.tournament.banner} alt="" />
+                    </div>
+                  )}
                   <div>
-                    <span className="tag">DEMO / 01</span>
+                    <span className="tag">
+                      {league.mode === "official"
+                        ? t(text("RASMIY", "ОФИЦИАЛЬНО", "OFFICIAL"))
+                        : "DEMO / 01"}
+                    </span>
                     <h2>{config.tournamentName}</h2>
                     <p>{t(copy.intro)}</p>
                     <Link href={href("bracket")} className="button primary">
@@ -505,7 +608,9 @@ export default function Site({ page }: { page: Page }) {
                 <div className="info-grid">
                   <article className="panel">
                     <h2>{t(copy.rules)}</h2>
-                    <p>{t(copy.rulesBody)}</p>
+                    <p className="preserve-lines">
+                      {t(league.tournament?.rules ?? copy.rulesBody)}
+                    </p>
                     {config.rulesUrl && (
                       <a href={config.rulesUrl} className="text-link">
                         {t(copy.rules)}
@@ -525,7 +630,18 @@ export default function Site({ page }: { page: Page }) {
                       <span>0{i + 1}</span>
                       <h3>{t(r)}</h3>
                       <p>
-                        {i === 3 ? "BO5" : "BO3"} · {16 / 2 ** i}{" "}
+                        {league.mode === "official"
+                          ? Array.from(
+                              new Set(
+                                matches
+                                  .filter((m) => m.round === i)
+                                  .map((m) => m.format),
+                              ),
+                            ).join(" / ") || t(copy.tbd)
+                          : i === 3
+                            ? "BO5"
+                            : "BO3"}{" "}
+                        · {2 ** (copy.rounds.length - i)}{" "}
                         {t(copy.teams).toLowerCase()}
                       </p>
                     </div>
@@ -536,7 +652,14 @@ export default function Site({ page }: { page: Page }) {
             {page === "teams" && (
               <>
                 <div className="toolbar">
-                  <p>16 {t(copy.placeholder).toLowerCase()}</p>
+                  <p>
+                    {teams.length}{" "}
+                    {t(
+                      league.mode === "official"
+                        ? copy.teams
+                        : copy.placeholder,
+                    ).toLowerCase()}
+                  </p>
                   <input
                     aria-label={t(
                       text("Jamoa qidirish", "Поиск команды", "Search teams"),
@@ -575,10 +698,16 @@ export default function Site({ page }: { page: Page }) {
                           <span className="team-watermark" aria-hidden="true">
                             {String(tm.slot).padStart(2, "0")}
                           </span>
-                          <Emblem slot={tm.slot} large />
+                          <Emblem slot={tm.slot} large logo={tm.logo} />
                         </div>
                         <h2>{t(tm.name)}</h2>
-                        <p>{t(copy.placeholder)}</p>
+                        <p>
+                          {t(
+                            league.mode === "official"
+                              ? (tm.university ?? copy.teams)
+                              : copy.placeholder,
+                          )}
+                        </p>
                         <span className="text-link">
                           {t(
                             text(
@@ -728,6 +857,20 @@ export default function Site({ page }: { page: Page }) {
             )}
             {page === "live" && (
               <>
+                {league.broadcast && (
+                  <div className="broadcast-editorial">
+                    <h2>{t(league.broadcast.name)}</h2>
+                    <span className="tag">
+                      {t(
+                        league.broadcast.status === "live"
+                          ? text("JONLI", "В ЭФИРЕ", "LIVE")
+                          : league.broadcast.status === "upcoming"
+                            ? text("TEZ ORADA", "СКОРО", "UPCOMING")
+                            : copy.offline,
+                      )}
+                    </span>
+                  </div>
+                )}
                 <div className="broadcast-status">
                   <span>
                     <span className="dot" />
@@ -771,7 +914,9 @@ export default function Site({ page }: { page: Page }) {
                       <Radio size={48} />
                       <span className="eyebrow">NCL BROADCAST</span>
                       <h2>{t(copy.offline)}</h2>
-                      <p>{t(copy.offlineBody)}</p>
+                      <p>
+                        {t(league.broadcast?.description ?? copy.offlineBody)}
+                      </p>
                     </div>
                   )}
                 </div>
@@ -789,7 +934,7 @@ export default function Site({ page }: { page: Page }) {
                       )}
                     </h3>
                   </div>
-                  <p>{t(copy.offlineBody)}</p>
+                  <p>{t(league.broadcast?.description ?? copy.offlineBody)}</p>
                   <div>
                     <span className="eyebrow">
                       {t(
@@ -824,57 +969,73 @@ export default function Site({ page }: { page: Page }) {
             )}
             {page === "sponsors" && (
               <>
-                <div className="section-intro">
-                  <h2>{t(copy.partners)}</h2>
-                  <p>{t(copy.partnerBody)}</p>
-                </div>
-                <div className="sponsor-grid">
-                  {[
-                    text("Bosh hamkor", "Титульный партнёр", "Title partner"),
-                    text(
-                      "Rasmiy hamkor",
-                      "Официальный партнёр",
-                      "Official partner",
-                    ),
-                    text(
-                      "Texnik hamkor",
-                      "Технический партнёр",
-                      "Technology partner",
-                    ),
-                  ].map((tier, i) => (
-                    <article className="sponsor-card" key={i}>
-                      <span className="eyebrow">
-                        0{i + 1} / {t(tier)}
-                      </span>
-                      <div className="sponsor-placeholder">
-                        <span className="partner-glyph" aria-hidden="true">
-                          <span />
-                          <span />
-                          <span />
-                        </span>
-                        <small>
-                          {t(
-                            text(
-                              "HAMKOR UCHUN JOY",
-                              "МЕСТО ДЛЯ ПАРТНЁРА",
-                              "PARTNER POSITION",
-                            ),
-                          )}
-                        </small>
-                      </div>
-                      <h2>
-                        {t(
-                          text(
-                            "Hamkor e’lon qilinmagan",
-                            "Партнёр не объявлен",
-                            "Partner to be announced",
-                          ),
-                        )}
-                      </h2>
-                      <p>{t(copy.placeholder)}</p>
-                    </article>
-                  ))}
-                </div>
+                {league.sponsors.length ? (
+                  <>
+                    <div className="section-intro">
+                      <h2>{t(copy.partners)}</h2>
+                    </div>
+                    <OfficialPartners partners={league.sponsors} lang={lang} />
+                  </>
+                ) : (
+                  <>
+                    {" "}
+                    <div className="section-intro">
+                      <h2>{t(copy.partners)}</h2>
+                      <p>{t(copy.partnerBody)}</p>
+                    </div>
+                    <div className="sponsor-grid">
+                      {[
+                        text(
+                          "Bosh hamkor",
+                          "Титульный партнёр",
+                          "Title partner",
+                        ),
+                        text(
+                          "Rasmiy hamkor",
+                          "Официальный партнёр",
+                          "Official partner",
+                        ),
+                        text(
+                          "Texnik hamkor",
+                          "Технический партнёр",
+                          "Technology partner",
+                        ),
+                      ].map((tier, i) => (
+                        <article className="sponsor-card" key={i}>
+                          <span className="eyebrow">
+                            0{i + 1} / {t(tier)}
+                          </span>
+                          <div className="sponsor-placeholder">
+                            <span className="partner-glyph" aria-hidden="true">
+                              <span />
+                              <span />
+                              <span />
+                            </span>
+                            <small>
+                              {t(
+                                text(
+                                  "HAMKOR UCHUN JOY",
+                                  "МЕСТО ДЛЯ ПАРТНЁРА",
+                                  "PARTNER POSITION",
+                                ),
+                              )}
+                            </small>
+                          </div>
+                          <h2>
+                            {t(
+                              text(
+                                "Hamkor e’lon qilinmagan",
+                                "Партнёр не объявлен",
+                                "Partner to be announced",
+                              ),
+                            )}
+                          </h2>
+                          <p>{t(copy.placeholder)}</p>
+                        </article>
+                      ))}
+                    </div>
+                  </>
+                )}{" "}
               </>
             )}
             {page === "about" && (
@@ -1045,18 +1206,22 @@ export default function Site({ page }: { page: Page }) {
                           : undefined
                       }
                     >
-                      <Emblem slot={tm?.slot} large />
+                      <Emblem slot={tm?.slot} large logo={tm?.logo} />
                       <h3>{tm ? t(tm.name) : t(copy.tbd)}</h3>
                       <strong>{selected.scores?.[i] ?? "—"}</strong>
                     </div>
                   ))}
                 </div>
-                <span className="tag">{t(copy.placeholder)}</span>
+                <span className="tag">
+                  {t(
+                    league.mode === "official"
+                      ? copy.details
+                      : copy.placeholder,
+                  )}
+                </span>
                 <p>
                   {selected.startsAt
-                    ? new Date(selected.startsAt).toLocaleString(lang, {
-                        timeZone: "Asia/Tashkent",
-                      }) + " UZT"
+                    ? formatUzt(selected.startsAt, true)
                     : t(copy.pending)}
                 </p>
                 {selected.maps.length ? (
@@ -1092,18 +1257,48 @@ export default function Site({ page }: { page: Page }) {
             ) : (
               team && (
                 <>
-                  <Emblem slot={team.slot} large />
+                  <Emblem slot={team.slot} large logo={team.logo} />
                   <h2>{t(team.name)}</h2>
                   <p>
-                    {t(copy.roster)} · {t(copy.placeholder)}
+                    {league.mode === "official"
+                      ? team.roster.length
+                        ? t(team.university ?? copy.teams)
+                        : t(copy.roster)
+                      : `${t(copy.roster)} · ${t(copy.placeholder)}`}
                   </p>
                   <div className="roster">
                     {team.roster.map((p, i) => (
                       <div key={i}>
                         <span>0{i + 1}</span>
-                        <Users size={18} />
-                        <strong>{p.name ?? t(copy.tbd)}</strong>
-                        <small>{t(p.role)}</small>
+                        {p.photo ? (
+                          <span className="player-photo">
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                            <img src={p.photo} alt="" />
+                          </span>
+                        ) : (
+                          <Users size={18} />
+                        )}
+                        <strong>
+                          {p.name ?? t(copy.tbd)}
+                          {p.profileName && (
+                            <small className="player-full-name">
+                              {t(p.profileName)}
+                            </small>
+                          )}
+                        </strong>
+                        <small>
+                          {t(p.role)}
+                          {p.steamUrl && (
+                            <a
+                              href={p.steamUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="player-steam"
+                            >
+                              Steam ↗
+                            </a>
+                          )}
+                        </small>
                       </div>
                     ))}
                   </div>
@@ -1117,6 +1312,8 @@ export default function Site({ page }: { page: Page }) {
   );
 }
 function Countdown({ lang }: { lang: Language }) {
+  const { config } = useContext(LeagueContext);
+  const copy = snapshotCopy(useContext(LeagueContext));
   const [now, setNow] = useState<number | null>(null);
   useEffect(() => {
     if (!config.startsAt) return;
@@ -1124,7 +1321,7 @@ function Countdown({ lang }: { lang: Language }) {
     update();
     const timer = setInterval(update, 1000);
     return () => clearInterval(timer);
-  }, []);
+  }, [config.startsAt]);
   const date = config.startsAt ? Date.parse(config.startsAt) : NaN;
   const remaining = now === null ? null : Math.max(0, date - now);
   if (!Number.isFinite(date) || remaining === null)
@@ -1184,7 +1381,9 @@ function MatchCard({
   selected?: boolean;
 }) {
   const t = (v: Localized) => v[lang];
-  const pair = participants(match);
+  const league = useContext(LeagueContext);
+  const copy = snapshotCopy(league);
+  const pair = getParticipants(match, league.teams, league.matches);
   return (
     <button
       className={`match-card status-${match.status} ${selected ? "is-selected" : ""}`}
@@ -1209,7 +1408,7 @@ function MatchCard({
             key={i}
             className={tm && match.winnerId === tm.id ? "is-winner" : undefined}
           >
-            <Emblem slot={tm?.slot} />
+            <Emblem slot={tm?.slot} logo={tm?.logo} />
             <strong>{tm ? t(tm.name) : t(copy.tbd)}</strong>
             <b>{match.scores?.[i] ?? "—"}</b>
           </span>
@@ -1240,16 +1439,7 @@ function MatchCard({
       <div className="match-bottom">
         <span>
           <span className={`dot ${match.status === "live" ? "active" : ""}`} />
-          {match.startsAt
-            ? new Date(match.startsAt).toLocaleString(
-                lang === "uz" ? "uz-UZ" : lang === "ru" ? "ru-RU" : "en-GB",
-                {
-                  timeZone: "Asia/Tashkent",
-                  dateStyle: "medium",
-                  timeStyle: "short",
-                },
-              ) + " UZT"
-            : t(copy.pending)}
+          {match.startsAt ? formatUzt(match.startsAt, true) : t(copy.pending)}
         </span>
         <ArrowUpRight size={15} />
       </div>
@@ -1270,6 +1460,7 @@ function SectionHead({
   matchHref: string;
 }) {
   const t = (v: Localized) => v[lang];
+  const copy = snapshotCopy(useContext(LeagueContext));
   return (
     <div className="section-heading">
       <h2>
