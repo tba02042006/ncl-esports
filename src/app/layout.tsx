@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import "@fontsource-variable/inter-tight/wght.css";
 import "./globals.css";
 export const metadata: Metadata = {
   title: { default: "NCL — National Cyber League", template: "%s | NCL" },

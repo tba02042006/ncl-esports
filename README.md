@@ -62,3 +62,13 @@ Responsive navigation exposes its expanded state; filters expose pressed state; 
 - `npm test`: four passing data integrity and winner-progression tests.
 - Production Chromium smoke checks: eight routes and 404, Uzbek/Russian/English switching and refresh retention, roster search/dialogs, match filters, bracket selection, Escape/Tab dialog behavior, offline broadcast, mobile menu and no document overflow at 1440px/390px. No browser runtime errors were reported.
 - Desktop and mobile home layouts were visually inspected. Official assets, actual tournament data, provider-backed broadcast status and backend integration remain future work.
+
+## Premium redesign
+
+The redesign keeps the existing routes, language switching and typed tournament model. It adds a broadcast-inspired visual system: large Inter Tight editorial typography, a cinematic NCL hero, an illustrated tournament feature, broadcast match cards, colored demo team crests, connected knockout rounds, a 16:9 standby broadcast center and tiered sponsor positions. Sponsor shapes are abstract placeholders, not real partner logos.
+
+`src/components/stage-art.tsx` contains the original SVG arena/monogram composition reused throughout the site. All artwork is CSS/SVG created for this project; no external imagery is loaded. The existing NCL wordmark, skewed logo tile and `config.accent` remain in use. Inter Tight is self-hosted through `@fontsource-variable/inter-tight` under the SIL Open Font License (see `THIRD_PARTY_NOTICES.md`); Latin and Cyrillic are supported without runtime font-service requests.
+
+Motion uses brief opacity/transform transitions and hover accent lines. It avoids continuous animation, scroll listeners and animation dependencies. Reduced-motion preferences disable reveals/transitions and change bracket navigation to immediate scrolling. Bracket navigation supports touch, keyboard overflow and translated previous/next controls; selected pairings stay highlighted after closing the details panel. Confirmed winners receive a lime emphasis while unresolved matches remain neutral.
+
+Redesign validation includes lint, all four existing data tests, the production build, desktop/mobile visual review, interaction smoke checks, and a 120-case route/language/viewport matrix (8 pages × 3 languages × widths 320, 390, 768, 1440 and 1920). No document or heading overflow or browser runtime errors were observed. Demo dates, sponsors and results remain unconfigured.
