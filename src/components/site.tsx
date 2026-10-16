@@ -1,15 +1,17 @@
 "use client";
 import Link from "next/link";
-import { useEffect, useState, useSyncExternalStore } from "react";
+import { StageArt } from "./stage-art";
+import { useEffect, useState, useSyncExternalStore, useRef } from "react";
 import {
   ArrowUpRight,
   ArrowRight,
+  ChevronLeft,
+  ChevronRight,
   Menu,
   X,
   Trophy,
   Radio,
   Target,
-  Shield,
   Users,
   CalendarDays,
   ChevronDown,
@@ -40,9 +42,42 @@ function Emblem({
   return (
     <span
       className={`emblem ${large ? "large" : ""}`}
-      style={{ "--team-hue": `${(slot * 37) % 360}deg` } as React.CSSProperties}
+      style={
+        {
+          "--team-hue": `${(slot ? slot * 37 : 80) % 360}deg`,
+        } as React.CSSProperties
+      }
     >
-      <Shield strokeWidth={1.5} />
+      <svg viewBox="0 0 64 74" fill="none" aria-hidden="true">
+        <path
+          d={
+            slot % 3 === 0
+              ? "M32 3 59 15 54 51 32 70 10 51 5 15Z"
+              : slot % 3 === 1
+                ? "M32 3 58 12 58 43 49 58 32 70 15 58 6 43 6 12Z"
+                : "M32 3 59 10 55 49 45 62 32 70 19 62 9 49 5 10Z"
+          }
+          fill="currentColor"
+          fillOpacity=".05"
+          stroke="currentColor"
+          strokeWidth="1.5"
+        />
+        <path
+          d="M32 9 52 17 49 46 32 61 15 46 12 17Z"
+          stroke="currentColor"
+          strokeOpacity=".2"
+        />
+        <path
+          d={
+            slot % 2
+              ? "M15 19 32 11 49 19M20 53 32 63 44 53"
+              : "M10 27 19 32M54 27 45 32M23 55H41"
+          }
+          stroke="currentColor"
+          strokeWidth="2"
+        />
+        <path d="M27 17H37L32 22Z" fill="currentColor" fillOpacity=".6" />
+      </svg>
       <b>{slot ? String(slot).padStart(2, "0") : "N"}</b>
     </span>
   );
@@ -51,7 +86,7 @@ function Brand() {
   return (
     <span className="brand">
       <span className="brand-mark">
-        N<span aria-hidden="true">↗</span>
+        N<ArrowUpRight aria-hidden="true" />
       </span>
       <span>
         NCL<small>NATIONAL CYBER LEAGUE</small>
@@ -65,6 +100,12 @@ export default function Site({ page }: { page: Page }) {
     readLanguage,
     () => "uz" as Language,
   );
+  const bracketRef = useRef<HTMLDivElement>(null);
+  const [activeMatch, setActiveMatch] = useState<string | null>(null);
+  function selectMatch(match: Match) {
+    setSelected(match);
+    setActiveMatch(match.id);
+  }
   const [menu, setMenu] = useState(false);
   const [selected, setSelected] = useState<Match | null>(null);
   const [team, setTeam] = useState<Team | null>(null);
@@ -120,14 +161,12 @@ export default function Site({ page }: { page: Page }) {
   const hero = (
     <section className="hero">
       <div className="hero-grid" />
-      <div className="hero-art" aria-hidden="true">
-        <div className="orbital" />
-        <span className="giant-n">N</span>
-        <div className="art-caption">
-          NCL / CS2
-          <br />
-          41°18′ N · 69°16′ E
-        </div>
+      <div className="hero-art">
+        <StageArt />
+      </div>
+      <div className="hero-topline">
+        <span>NCL — NATIONAL CYBER LEAGUE</span>
+        <span>COUNTER-STRIKE 2 / UZBEKISTAN</span>
       </div>
       <div className="hero-content">
         <div className="eyebrow">
@@ -137,7 +176,9 @@ export default function Site({ page }: { page: Page }) {
         <h1>
           {t(copy.hero1)}
           <br />
-          <em>{t(copy.hero2)}</em>
+          <em>
+            <span>{t(copy.hero2)}</span>
+          </em>
         </h1>
         <p>{t(copy.intro)}</p>
         <div className="hero-actions">
@@ -159,13 +200,29 @@ export default function Site({ page }: { page: Page }) {
           PC · 5V5
         </div>
       </div>
+      <div className="hero-side-label" aria-hidden="true">
+        COMPETE. CONNECT. BECOME.
+      </div>
       <div className="hero-index">
-        01 — 08 <span>SCROLL TO DISCOVER ↓</span>
+        <span>01 / NCL CAMPUS SERIES</span>
+        <span>
+          {t(
+            text(
+              "YANGI AVLOD SAHNASI",
+              "СЦЕНА НОВОГО ПОКОЛЕНИЯ",
+              "THE NEXT GENERATION STAGE",
+            ),
+          )}{" "}
+          ↓
+        </span>
       </div>
     </section>
   );
   return (
-    <div style={{ "--accent": config.accent } as React.CSSProperties}>
+    <div
+      className={`site page-${page}`}
+      style={{ "--accent": config.accent } as React.CSSProperties}
+    >
       <header>
         <div className="header-inner">
           <Link href={href("home")} aria-label="NCL home">
@@ -234,6 +291,13 @@ export default function Site({ page }: { page: Page }) {
                 {t(copy.demo)}
               </div>
               <section className="featured">
+                <div className="featured-art" aria-hidden="true">
+                  <StageArt compact />
+                  <span>
+                    CS<span>2</span>
+                  </span>
+                  <small>NCL / CAMPUS SERIES</small>
+                </div>
                 <div>
                   <div className="eyebrow">
                     NCL /{" "}
@@ -273,6 +337,35 @@ export default function Site({ page }: { page: Page }) {
                 </div>
                 <Countdown lang={lang} />
               </section>
+              <section className="match-spotlight">
+                <div className="spotlight-intro">
+                  <span className="eyebrow">
+                    {t(text("UCHRASHUV MARKAZI", "МАТЧ-ЦЕНТР", "MATCH CENTER"))}{" "}
+                    / 01
+                  </span>
+                  <h2>
+                    {t(
+                      text(
+                        "Raqobat shu yerda boshlanadi.",
+                        "Соперничество начинается здесь.",
+                        "Where rivalries begin.",
+                      ),
+                    )}
+                  </h2>
+                  <p>{t(copy.pending)}</p>
+                  <Link href={href("bracket")} className="text-link">
+                    {t(pages[4].label)}
+                    <ArrowUpRight size={18} />
+                  </Link>
+                </div>
+                <MatchCard
+                  match={
+                    matches.find((m) => m.status !== "finished") ?? matches[0]
+                  }
+                  lang={lang}
+                  onSelect={selectMatch}
+                />
+              </section>
               <section className="section">
                 <SectionHead
                   lang={lang}
@@ -288,7 +381,8 @@ export default function Site({ page }: { page: Page }) {
                     .map((m) => (
                       <MatchCard
                         lang={lang}
-                        onSelect={setSelected}
+                        onSelect={selectMatch}
+                        selected={activeMatch === m.id}
                         key={m.id}
                         match={m}
                       />
@@ -311,7 +405,8 @@ export default function Site({ page }: { page: Page }) {
                         .map((m) => (
                           <MatchCard
                             lang={lang}
-                            onSelect={setSelected}
+                            onSelect={selectMatch}
+                            selected={activeMatch === m.id}
                             key={m.id}
                             match={m}
                           />
@@ -340,7 +435,8 @@ export default function Site({ page }: { page: Page }) {
                       <span>
                         NEXT
                         <br />
-                        GEN<span aria-hidden="true">↗</span>
+                        GEN
+                        <ArrowUpRight aria-hidden="true" />
                       </span>
                       <small>NCL / COMMUNITY</small>
                     </div>
@@ -362,6 +458,9 @@ export default function Site({ page }: { page: Page }) {
               </section>
               <section className="partner-strip">
                 <span className="eyebrow">{t(pages[6].label)}</span>
+                <div className="partner-wordmark" aria-hidden="true">
+                  NEXT / TOGETHER
+                </div>
                 <h2>{t(copy.partners)}</h2>
                 <p>{t(copy.partnerBody)}</p>
                 <Link href={href("sponsors")} className="text-link">
@@ -376,7 +475,7 @@ export default function Site({ page }: { page: Page }) {
             <div className="eyebrow">NATIONAL CYBER LEAGUE / CS2</div>
             <h1 className="page-title">
               {t(pages.find((p) => p.id === page)!.label)}
-              <span aria-hidden="true">↗</span>
+              <ArrowUpRight aria-hidden="true" />
             </h1>
             <div className="demo-notice">
               <Target size={15} />
@@ -394,7 +493,14 @@ export default function Site({ page }: { page: Page }) {
                       <ArrowUpRight size={18} />
                     </Link>
                   </div>
-                  <Trophy size={130} strokeWidth={0.7} />
+                  <div className="tournament-art">
+                    <StageArt compact />
+                    <span className="tournament-art-label">
+                      CAMPUS
+                      <br />
+                      SERIES<span>CS2</span>
+                    </span>
+                  </div>
                 </section>
                 <div className="info-grid">
                   <article className="panel">
@@ -454,13 +560,23 @@ export default function Site({ page }: { page: Page }) {
                     .map((tm) => (
                       <button
                         className="team-card"
+                        style={
+                          {
+                            "--team-hue": `${(tm.slot * 37) % 360}deg`,
+                          } as React.CSSProperties
+                        }
                         key={tm.id}
                         onClick={() => setTeam(tm)}
                       >
                         <span className="team-number">
                           NCL / {String(tm.slot).padStart(2, "0")}
                         </span>
-                        <Emblem slot={tm.slot} large />
+                        <div className="team-crest-stage">
+                          <span className="team-watermark" aria-hidden="true">
+                            {String(tm.slot).padStart(2, "0")}
+                          </span>
+                          <Emblem slot={tm.slot} large />
+                        </div>
                         <h2>{t(tm.name)}</h2>
                         <p>{t(copy.placeholder)}</p>
                         <span className="text-link">
@@ -513,7 +629,8 @@ export default function Site({ page }: { page: Page }) {
                     .map((m) => (
                       <MatchCard
                         lang={lang}
-                        onSelect={setSelected}
+                        onSelect={selectMatch}
+                        selected={activeMatch === m.id}
                         key={m.id}
                         match={m}
                       />
@@ -531,8 +648,55 @@ export default function Site({ page }: { page: Page }) {
             )}
             {page === "bracket" && (
               <>
-                <p className="muted">{t(copy.bracketHint)}</p>
+                <div className="bracket-toolbar">
+                  <p className="muted">{t(copy.bracketHint)}</p>
+                  <div>
+                    <button
+                      aria-label={t(
+                        text(
+                          "Oldingi bosqich",
+                          "Предыдущий раунд",
+                          "Previous round",
+                        ),
+                      )}
+                      onClick={() =>
+                        bracketRef.current?.scrollBy({
+                          left: -320,
+                          behavior: window.matchMedia(
+                            "(prefers-reduced-motion: reduce)",
+                          ).matches
+                            ? "instant"
+                            : "smooth",
+                        })
+                      }
+                    >
+                      <ChevronLeft size={18} />
+                    </button>
+                    <button
+                      aria-label={t(
+                        text(
+                          "Keyingi bosqich",
+                          "Следующий раунд",
+                          "Next round",
+                        ),
+                      )}
+                      onClick={() =>
+                        bracketRef.current?.scrollBy({
+                          left: 320,
+                          behavior: window.matchMedia(
+                            "(prefers-reduced-motion: reduce)",
+                          ).matches
+                            ? "instant"
+                            : "smooth",
+                        })
+                      }
+                    >
+                      <ChevronRight size={18} />
+                    </button>
+                  </div>
+                </div>
                 <div
+                  ref={bracketRef}
                   className="bracket"
                   tabIndex={0}
                   aria-label={t(pages[4].label)}
@@ -550,7 +714,8 @@ export default function Site({ page }: { page: Page }) {
                             <div className="bracket-node" key={m.id}>
                               <MatchCard
                                 lang={lang}
-                                onSelect={setSelected}
+                                onSelect={selectMatch}
+                                selected={activeMatch === m.id}
                                 match={m}
                               />
                             </div>
@@ -563,6 +728,25 @@ export default function Site({ page }: { page: Page }) {
             )}
             {page === "live" && (
               <>
+                <div className="broadcast-status">
+                  <span>
+                    <span className="dot" />
+                    {t(
+                      config.youtubeVideoId
+                        ? text(
+                            "EFIR SOZLANGAN",
+                            "ЭФИР НАСТРОЕН",
+                            "BROADCAST CONFIGURED",
+                          )
+                        : text(
+                            "EFIR KUTILMOQDA",
+                            "ОЖИДАНИЕ ЭФИРА",
+                            "BROADCAST STANDBY",
+                          ),
+                    )}
+                  </span>
+                  <span>YOUTUBE / CS2 / UZT</span>
+                </div>
                 <div className="broadcast">
                   {config.youtubeVideoId &&
                   /^[a-zA-Z0-9_-]{11}$/.test(config.youtubeVideoId) ? (
@@ -574,12 +758,50 @@ export default function Site({ page }: { page: Page }) {
                     />
                   ) : (
                     <div className="offline">
+                      <div className="offline-art">
+                        <StageArt compact />
+                      </div>
+                      <div className="test-pattern" aria-hidden="true">
+                        <i />
+                        <i />
+                        <i />
+                        <i />
+                        <i />
+                      </div>
                       <Radio size={48} />
                       <span className="eyebrow">NCL BROADCAST</span>
                       <h2>{t(copy.offline)}</h2>
                       <p>{t(copy.offlineBody)}</p>
                     </div>
                   )}
+                </div>
+                <div className="stream-info">
+                  <div>
+                    <Radio />
+                    <span className="eyebrow">NCL BROADCAST NETWORK</span>
+                    <h3>
+                      {t(
+                        text(
+                          "Sizning birinchi qatoringiz.",
+                          "Ваш первый ряд.",
+                          "Your front-row seat.",
+                        ),
+                      )}
+                    </h3>
+                  </div>
+                  <p>{t(copy.offlineBody)}</p>
+                  <div>
+                    <span className="eyebrow">
+                      {t(
+                        text(
+                          "KEYINGI EFIR",
+                          "СЛЕДУЮЩИЙ ЭФИР",
+                          "NEXT BROADCAST",
+                        ),
+                      )}
+                    </span>
+                    <strong>{t(copy.pending)}</strong>
+                  </div>
                 </div>
                 <div className="section-heading">
                   <h2>{t(copy.upcoming)}</h2>
@@ -591,7 +813,8 @@ export default function Site({ page }: { page: Page }) {
                     .map((m) => (
                       <MatchCard
                         lang={lang}
-                        onSelect={setSelected}
+                        onSelect={selectMatch}
+                        selected={activeMatch === m.id}
                         key={m.id}
                         match={m}
                       />
@@ -624,7 +847,20 @@ export default function Site({ page }: { page: Page }) {
                         0{i + 1} / {t(tier)}
                       </span>
                       <div className="sponsor-placeholder">
-                        <span>+</span>
+                        <span className="partner-glyph" aria-hidden="true">
+                          <span />
+                          <span />
+                          <span />
+                        </span>
+                        <small>
+                          {t(
+                            text(
+                              "HAMKOR UCHUN JOY",
+                              "МЕСТО ДЛЯ ПАРТНЁРА",
+                              "PARTNER POSITION",
+                            ),
+                          )}
+                        </small>
                       </div>
                       <h2>
                         {t(
@@ -644,7 +880,14 @@ export default function Site({ page }: { page: Page }) {
             {page === "about" && (
               <>
                 <div className="about-intro">
-                  <span className="about-monogram">N↗</span>
+                  <div className="about-monogram">
+                    <StageArt />
+                    <span>
+                      NEXT IS
+                      <br />
+                      <em>OURS.</em>
+                    </span>
+                  </div>
                   <div>
                     <h2>{t(copy.about)}</h2>
                     <p>{t(copy.newsBody)}</p>
@@ -770,7 +1013,7 @@ export default function Site({ page }: { page: Page }) {
           }}
         >
           <div
-            className="modal"
+            className={`modal ${team ? "team-modal" : "match-modal"}`}
             role="dialog"
             aria-modal="true"
             aria-label={t(copy.details)}
@@ -794,14 +1037,21 @@ export default function Site({ page }: { page: Page }) {
                 <h2>{config.tournamentName}</h2>
                 <div className="detail-teams">
                   {participants(selected).map((tm, i) => (
-                    <div key={i}>
+                    <div
+                      key={i}
+                      className={
+                        tm && selected.winnerId === tm.id
+                          ? "is-winner"
+                          : undefined
+                      }
+                    >
                       <Emblem slot={tm?.slot} large />
                       <h3>{tm ? t(tm.name) : t(copy.tbd)}</h3>
                       <strong>{selected.scores?.[i] ?? "—"}</strong>
                     </div>
                   ))}
                 </div>
-                <p className="demo-notice">{t(copy.demo)}</p>
+                <span className="tag">{t(copy.placeholder)}</span>
                 <p>
                   {selected.startsAt
                     ? new Date(selected.startsAt).toLocaleString(lang, {
@@ -926,27 +1176,66 @@ function MatchCard({
   match,
   lang,
   onSelect,
+  selected = false,
 }: {
   match: Match;
   lang: Language;
   onSelect: (match: Match) => void;
+  selected?: boolean;
 }) {
   const t = (v: Localized) => v[lang];
   const pair = participants(match);
   return (
-    <button className="match-card" onClick={() => onSelect(match)}>
+    <button
+      className={`match-card status-${match.status} ${selected ? "is-selected" : ""}`}
+      onClick={() => onSelect(match)}
+      aria-pressed={selected}
+    >
+      <div className="match-id">
+        <span>NCL / {match.id.toUpperCase()}</span>
+        <span>
+          {match.status === "pending"
+            ? t(text("KUTILMOQDA", "ОЖИДАНИЕ", "STANDBY"))
+            : t(copy[match.status])}
+        </span>
+      </div>
       <div className="match-meta">
         <span>{t(copy.rounds[match.round])}</span>
         <span>{match.format}</span>
       </div>
       <div className="match-teams">
         {pair.map((tm, i) => (
-          <span key={i}>
+          <span
+            key={i}
+            className={tm && match.winnerId === tm.id ? "is-winner" : undefined}
+          >
             <Emblem slot={tm?.slot} />
             <strong>{tm ? t(tm.name) : t(copy.tbd)}</strong>
             <b>{match.scores?.[i] ?? "—"}</b>
           </span>
         ))}
+      </div>
+      <span className="match-versus" aria-hidden="true">
+        VS
+      </span>
+      <div className="match-map-info">
+        {match.maps.length ? (
+          match.maps.map((map) => (
+            <span key={map.name}>
+              {map.name} <b>{map.scores.join(" : ")}</b>
+            </span>
+          ))
+        ) : (
+          <span>
+            {t(
+              text(
+                "Xaritalar kutilmoqda",
+                "Карты ожидаются",
+                "Map selection pending",
+              ),
+            )}
+          </span>
+        )}
       </div>
       <div className="match-bottom">
         <span>
